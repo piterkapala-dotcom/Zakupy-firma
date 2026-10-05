@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>Gastro Order Manager — Uncle Smash · Sztos Burger · Parma Pizza</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#111827}
+header{background:#111827;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
+h1{font-size:21px;margin:0 0 4px}header small{opacity:.7}
+nav{display:flex;gap:8px;overflow:auto;padding:10px;background:white;position:sticky;top:76px;z-index:4;border-bottom:1px solid #ddd}
+button,select,input{font:inherit}button{border:0;border-radius:10px;padding:10px 13px;font-weight:700;cursor:pointer}
+.navbtn{background:#e5e7eb;color:#111827;white-space:nowrap}.navbtn.active{background:#111827;color:#fff}
+main{max-width:1100px;margin:auto;padding:16px}.card{background:white;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0000000d}
+h2{font-size:18px;margin:0 0 12px}.muted{color:#6b7280;font-size:13px}.grid{display:grid;gap:10px}
+.product{display:grid;grid-template-columns:1fr 90px 70px 95px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+.product:last-child{border-bottom:0}.product input{width:100%;padding:9px;border:1px solid #d1d5db;border-radius:9px}
+.low{background:#fff7ed}.danger{color:#c2410c;font-weight:800}.ok{color:#15803d;font-weight:700}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;margin:2px}
+.supplier{margin:10px 0}.supplier h3{margin:0 0 8px;font-size:16px}
+.orderrow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #eee}
+.orderrow:last-child{border:0}.controls{display:flex;gap:8px;flex-wrap:wrap}
+.primary{background:#111827;color:#fff}.secondary{background:#e5e7eb}.success{background:#dcfce7;color:#166534}
+.hidden{display:none}.summary{display:flex;gap:10px;flex-wrap:wrap}.stat{background:#f9fafb;border-radius:12px;padding:12px;min-width:130px}.stat b{display:block;font-size:22px}
+@media(max-width:650px){.product{grid-template-columns:1fr 76px 60px 80px;font-size:13px}.product .sup{display:none}}
+</style>
+</head>
+<body>
+<header><h1>Gastro Order Manager</h1><small>Uncle Smash · Sztos Burger · Parma Pizza</small></header>
+<nav>
+<button class="navbtn active" data-view="stock">📦 Magazyn</button>
+<button class="navbtn" data-view="orders">🛒 Zamówienia</button>
+<button class="navbtn" data-view="settings">⚙️ Ustawienia</button>
+</nav>
+<main id="app"></main>
+<script>
+const DB = {
+"Uncle Smash":{
+"Wołowina":["kg",20,["Sławek"]],"Boczek":["kg",8,["Spec"]],"Chorizo":["paczka",3,["Spec"]],
+"Bułki":["szt.",120,["Czajczyk"]],"Chleb tostowy":["szt.",2,["Czajczyk"]],"Batony do Philly Cheesesteak":["szt.",15,["Czajczyk"]],
+"Cheddar":["kg",6,["Spec"]],"Lazur":["kg",1,["Spec"]],"Masło":["szt.",2,["Spec"]],"Mleko":["l",3,["Spec"]],
+"Sałata":["szt.",8,["Makro"]],"Pomidor":["kg",6,["Makro"]],"Cebula biała":["siatka",1,["Makro"]],"Cebula czerwona":["siatka",1,["Makro"]],"Awokado":["szt.",2,["Makro"]],"Sałatka szwedzka":["szt.",4,["Makro"]],"Jalapeño":["szt.",1,["Makro"]],
+"Frytki":["szt.",6,["Spec"]],"Krążki cebulowe":["szt.",1,["Spec"]],"Frytura":["szt.",2,["Spec"]],
+"Majonez":["szt.",2,["Spec"]],"Ketchup":["szt.",2,["Spec"]],"Sriracha":["szt.",2,["Spec"]],"Musztarda słoneczna":["szt.",2,["Spec"]],"Musztarda francuska":["szt.",1,["Spec"]],"Sos Worcestershire":["szt.",2,["Spec"]],"Pasta truflowa":["szt.",1,["Spec"]],"Krem balsamiczny":["szt.",1,["Spec"]],"Konfitura malinowa":["szt.",2,["Spec"]],"Masło orzechowe":["szt.",1,["Spec"]],"Ocet winny":["szt.",1,["Spec"]],"Ocet biały":["szt.",1,["Spec"]],
+"Sól":["kg",1,["Spec"]],"Pieprz":["opakowanie",1,["Spec"]],"Cukier":["kg",1,["Spec"]],"Nachosy":["szt.",2,["Spec"]],"Grzyby":["szt.",1,["Spec"]],
+"Papier do pakowania":["szt.",1,["RAD-PAK"]],"Torby do pakowania":["szt.",2,["RAD-PAK"]],"Rolki do kasy":["rolka",10,["RAD-PAK"]],"Nitryle":["opakowanie",3,["RAD-PAK"]],"Folia aluminiowa":["szt.",1,["RAD-PAK"]],"Ręcznik papierowy":["szt.",1,["RAD-PAK"]],"Opakowania na frytki":["szt.",2,["RAD-PAK"]],
+"Coca-Cola puszka":["szt.",20,["Makro"]],"Fanta puszka":["szt.",20,["Makro"]],"Coca-Cola Zero puszka":["szt.",20,["Makro"]],"Sprite puszka":["szt.",20,["Makro"]],"Woda gazowana 0,5 l":["szt.",20,["Makro"]],"Woda niegazowana 0,5 l":["szt.",20,["Makro"]],"Sok pomarańczowy 0,5 l":["szt.",20,["Makro"]],"Sok jabłkowy 0,5 l":["szt.",20,["Makro"]],"Sok multiwitamina 0,5 l":["szt.",20,["Makro"]],"Woda pracownicza":["szt.",6,["Makro"]]
+},
+"Sztos Burger":{
+"Wołowina":["kg",15,["Koldras"]],"Boczek":["kg",4,["Food O'Clock"]],"Chorizo":["paczka",1,["Food O'Clock"]],"Kurczak":["paczka",1,["Food O'Clock"]],"Prosciutto Crudo":["paczka",1,["Food O'Clock"]],
+"Bułki":["szt.",60,["Prima"]],"Cheddar":["kg",4,["Food O'Clock"]],"Mleko":["l",2,["Food O'Clock"]],"Camembert":["szt.",4,["Makro"]],"Oscypek":["szt.",1,["Makro"]],"Mozzarella kulka":["szt.",5,["Makro"]],"Jogurt naturalny":["szt.",1,["Food O'Clock"]],
+"Sałata":["szt.",8,["Makro"]],"Pomidor":["szt.",6,["Makro"]],"Cebula czerwona":["siatka",1,["Makro"]],"Sałatka szwedzka":["szt.",2,["Makro"]],"Jalapeño":["szt.",1,["Food O'Clock"]],"Rucola":["opakowanie",2,["Makro"]],
+"Frytki":["szt.",10,["Food O'Clock"]],"Krążki cebulowe":["szt.",3,["Food O'Clock"]],"Stripsy":["szt.",4,["Food O'Clock"]],"Mozzarella sticks":["szt.",2,["Food O'Clock"]],"Frytura":["szt.",3,["Food O'Clock"]],
+"Majonez":["szt.",2,["Food O'Clock"]],"Ketchup":["szt.",2,["Food O'Clock"]],"Musztarda miodowa":["szt.",4,["Food O'Clock"]],"Musztarda francuska":["szt.",1,["Makro"]],"Sos serowy":["szt.",4,["Food O'Clock"]],"Sos BBQ":["szt.",1,["Makro"]],"Sos ostry":["szt.",4,["Makro"]],"Salsa mexicana":["szt.",2,["Food O'Clock"]],"Pesto":["szt.",1,["Makro"]],"Oliwa truflowa":["szt.",1,["Makro"]],"Żurawina":["szt.",1,["Food O'Clock"]],"Ocet winny":["szt.",1,["Food O'Clock"]],"Ocet biały":["szt.",1,["Food O'Clock"]],
+"Sól":["kg",3,["Makro"]],"Pieprz":["opakowanie",1,["Food O'Clock"]],"Cukier":["kg",1,["Makro"]],"Nachosy":["szt.",2,["Makro"]],"Mąka":["kg",1,["Food O'Clock"]],
+"Rolki do kasy":["rolka",10,["Papak"]],"Nitryle":["opakowanie",3,["Papak"]],"Ręcznik papierowy":["szt.",1,["Papak"]],"Opakowania na frytki":["szt.",2,["Papak"]],"Papier":["opakowanie",1,["Papak"]],"Rolki małe":["rolka",6,["Papak"]],"Rolki duże":["rolka",4,["Papak"]],"Torby małe":["szt.",2,["Papak"]],"Torby duże":["szt.",2,["Papak"]],"Papier silikonowy":["szt.",1,["Papak"]],"Sosjerki":["szt.",1,["Papak"]],
+"Pepsi puszka":["szt.",20,["Makro"]],"Mirinda puszka":["szt.",20,["Makro"]],"Pepsi Max puszka":["szt.",20,["Makro"]],"7UP puszka":["szt.",20,["Makro"]],"Pepsi 0,5 l":["szt.",20,["Makro"]],"Mirinda 0,5 l":["szt.",20,["Makro"]],"Pepsi Max 0,5 l":["szt.",20,["Makro"]],"7UP 0,5 l":["szt.",20,["Makro"]],"Woda pracownicza":["szt.",6,["Makro"]]
+},
+"Parma Pizza":{
+"Boczek":["kg",6,["Food O'Clock"]],"Chorizo":["paczka",3,["Food O'Clock"]],"Kurczak":["paczka",1,["Makro"]],"Prosciutto Crudo":["paczka",3,["Food O'Clock"]],"Szynka":["kg",6,["Food O'Clock"]],"Salami":["kg",5,["Food O'Clock"]],"Kiełbasa":["kg",1,["Makro"]],"Salami pepperoni":["kg",5,["Food O'Clock"]],"Tuńczyk":["puszka",4,["Food O'Clock"]],
+"Lazur":["kg",1,["Food O'Clock"]],"Mleko":["l",2,["Food O'Clock"]],"Camembert":["szt.",6,["Makro"]],"Oscypek":["szt.",1,["Makro"]],"Mozzarella":["kg",20,["Makro","Food O'Clock"]],"Feta":["opakowanie",4,["Food O'Clock"]],"Jogurt":["szt.",1,["Food O'Clock"]],"Śmietana":["szt.",2,["Food O'Clock"]],"Parmezan":["opakowanie",1,["Food O'Clock"]],
+"Pomidor":["kg",3,["Makro"]],"Cebula czerwona":["siatka",1,["Makro"]],"Jalapeño":["szt.",2,["Food O'Clock"]],"Rucola":["opakowanie",5,["Makro"]],"Pieczarki":["skrzynka",1,["Makro"]],"Kukurydza":["szt.",10,["Makro"]],"Papryka konserwowa":["szt.",1,["Food O'Clock","Makro"]],"Oliwki":["szt.",1,["Food O'Clock"]],"Pomidorki cherry":["kg",1,["Makro"]],"Bazylia świeża":["szt.",2,["Makro"]],
+"Szpinak mrożony":["szt.",1,["Food O'Clock"]],"Sól":["kg",3,["Makro"]],"Pieprz":["opakowanie",1,["Food O'Clock"]],"Cukier":["kg",1,["Makro"]],"Mąka":["kg",40,["Food O'Clock"]],"Drożdże":["szt.",1,["Food O'Clock"]],"Musztarda francuska":["szt.",1,["Makro"]],"Sos BBQ":["szt.",1,["Food O'Clock"]],"Sos ostry":["szt.",4,["Food O'Clock"]],"Żurawina":["szt.",3,["Food O'Clock"]],"Ocet winny":["szt.",1,["Food O'Clock"]],"Ocet biały":["szt.",1,["Food O'Clock"]],"Oliwa":["szt.",2,["Food O'Clock"]],
+"Rolki do kasy":["rolka",10,["Papak"]],"Ręcznik papierowy":["szt.",1,["Papak"]],"Rolki małe":["rolka",6,["Papak"]],"Rolki duże":["rolka",4,["Papak"]],"Sosjerki":["szt.",1,["Papak"]],"Kartony 30 cm":["szt.",100,["Papak"]],"Kartony 40 cm":["szt.",100,["Papak"]],"Kartony 50 cm":["szt.",100,["Papak"]],"Pergamin":["szt.",1,["Papak"]],"Mercedesy / dystanse":["szt.",1,["Papak"]],"Worki HDPE":["szt.",2,["Papak"]],
+"Pepsi 0,85 l":["szt.",20,["Makro"]],"Mirinda 0,85 l":["szt.",20,["Makro"]],"7UP 0,85 l":["szt.",20,["Makro"]],"Woda pracownicza":["szt.",6,["Food O'Clock"]]
+}
+};
+
+let state=JSON.parse(localStorage.getItem("gastroOrderState")||"{}");
+let config=JSON.parse(localStorage.getItem("gastroOrderConfig")||"null");
+let view="stock", shop="Uncle Smash";
+if(!config){ config=JSON.parse(JSON.stringify(DB)); saveConfig(); }
+function saveConfig(){localStorage.setItem("gastroOrderConfig",JSON.stringify(config))}
+function save(){localStorage.setItem("gastroOrderState",JSON.stringify(state))}
+function ensureConfig(){ for(const s of Object.keys(DB)){ if(!config[s]) config[s]={}; for(const [p,v] of Object.entries(DB[s])) if(!config[s][p]) config[s][p]=v; } saveConfig(); }
+ensureConfig();
+function key(s,p){return s+"|"+p}
+function stock(s,p){return Number(state[key(s,p)]??0)}
+function setStock(s,p,v){state[key(s,p)]=Math.max(0,Number(v)||0);save()}
+function esc(x){return String(x).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+function renderStock(){
+let products=config[shop], html=`<div class="card"><h2>📦 ${shop}</h2><p class="muted">Wpisz aktualny stan. Minimum i dostawcy są już zapisane.</p>
+<div class="controls">${Object.keys(DB).map(s=>`<button class="${s===shop?'primary':'secondary'}" onclick="shop='${s}';render()">${s}</button>`).join("")}</div></div>`;
+html+=`<div class="card"><div class="product" style="font-weight:800"><div>Produkt</div><div>Stan</div><div>Min.</div><div>Zamówić</div></div>`;
+for(const [p,[unit,min,sups]] of Object.entries(products)){
+let st=stock(shop,p), order=Math.max(0,min-st);
+html+=`<div class="product ${order?'low':''}"><div><b>${esc(p)}</b><div class="muted">${unit} · ${sups.join(" + ")}</div></div><input type="number" min="0" step="0.01" value="${st}" onchange="setStock('${shop}','${esc(p)}',this.value);render()"><div>${min}</div><div class="${order?'danger':'ok'}">${order?order+" "+unit:"✓"}</div></div>`;
+}
+html+=`</div></div>`;document.getElementById("app").innerHTML=html;
+}
+function renderOrders(){
+let groups={};
+for(const [s,products] of Object.entries(config)){
+for(const [p,[unit,min,sups]] of Object.entries(products)){
+let order=Math.max(0,min-stock(s,p)); if(!order)continue;
+for(const sup of sups){(groups[sup]??=[]).push({s,p,unit,order})}
+}}
+let html=`<div class="card"><h2>🛒 Zamówienia</h2><p class="muted">Produkty są grupowane po dostawcach. Przy dwóch dostawcach pojawiają się w obu listach.</p></div>`;
+for(const [sup,rows] of Object.entries(groups)){
+html+=`<div class="card supplier"><h3>${esc(sup)} <span class="badge">${rows.length} pozycji</span></h3>`;
+for(const r of rows) html+=`<div class="orderrow"><span><b>${esc(r.p)}</b><div class="muted">${r.s}</div></span><b>${r.order} ${r.unit}</b></div>`;
+html+=`</div>`;
+}
+if(!Object.keys(groups).length) html+=`<div class="card"><h2>🎉 Nic do zamówienia</h2><p class="muted">Wszystkie stany są powyżej minimów.</p></div>`;
+document.getElementById("app").innerHTML=html;
+}
+
+function renderSettings(){
+let products=config[shop];
+let html=`<div class="card"><h2>⚙️ Ustawienia — ${shop}</h2>
+<p class="muted">Tutaj możesz zmieniać minima, jednostki i dostawców bez edycji kodu.</p>
+<div class="controls">${Object.keys(config).map(s=>`<button class="${s===shop?'primary':'secondary'}" onclick="shop='${s}';render()">${s}</button>`).join("")}</div></div>`;
+
+html+=`<div class="card"><h2>📏 Minima i dostawcy</h2>`;
+for(const [p,v] of Object.entries(products)){
+let [unit,min,sups]=v;
+html+=`<div style="padding:12px 0;border-bottom:1px solid #eee">
+<b>${esc(p)}</b>
+<div class="controls" style="margin-top:8px">
+<label class="muted">Minimum<br><input style="width:100px;padding:8px;border:1px solid #d1d5db;border-radius:8px" type="number" min="0" step="0.01" value="${min}" onchange="updateMin('${shop}','${esc(p)}',this.value)"></label>
+<label class="muted">Jednostka<br><input style="width:110px;padding:8px;border:1px solid #d1d5db;border-radius:8px" value="${esc(unit)}" onchange="updateUnit('${shop}','${esc(p)}',this.value)"></label>
+<label class="muted" style="flex:1">Dostawcy (oddziel przecinkami)<br><input style="width:100%;min-width:220px;padding:8px;border:1px solid #d1d5db;border-radius:8px" value="${esc(sups.join(", "))}" onchange="updateSup('${shop}','${esc(p)}',this.value)"></label>
+<button class="secondary" style="align-self:end" onclick="deleteProduct('${shop}','${esc(p)}')">Usuń</button>
+</div></div>`;
+}
+html+=`</div>`;
+
+html+=`<div class="card"><h2>➕ Dodaj produkt</h2>
+<div class="controls">
+<input id="newName" placeholder="Nazwa produktu" style="padding:10px;border:1px solid #d1d5db;border-radius:9px">
+<input id="newUnit" placeholder="Jednostka" style="padding:10px;border:1px solid #d1d5db;border-radius:9px;width:110px">
+<input id="newMin" type="number" min="0" placeholder="Minimum" style="padding:10px;border:1px solid #d1d5db;border-radius:9px;width:110px">
+<input id="newSup" placeholder="Dostawca" style="padding:10px;border:1px solid #d1d5db;border-radius:9px">
+<button class="primary" onclick="addProduct()">Dodaj</button>
+</div></div>`;
+document.getElementById("app").innerHTML=html;
+}
+function updateMin(s,p,v){config[s][p][1]=Number(v)||0;saveConfig();renderSettings()}
+function updateUnit(s,p,v){config[s][p][0]=v.trim()||"szt.";saveConfig();renderSettings()}
+function updateSup(s,p,v){config[s][p][2]=v.split(",").map(x=>x.trim()).filter(Boolean);saveConfig();renderSettings()}
+function addProduct(){
+let n=document.getElementById("newName").value.trim(),u=document.getElementById("newUnit").value.trim()||"szt.",m=Number(document.getElementById("newMin").value)||0,su=document.getElementById("newSup").value.split(",").map(x=>x.trim()).filter(Boolean);
+if(!n||!su.length){alert("Podaj nazwę produktu i przynajmniej jednego dostawcę.");return}
+config[shop][n]=[u,m,su];saveConfig();renderSettings();
+}
+function deleteProduct(s,p){
+if(confirm("Usunąć produkt: "+p+"?")){delete config[s][p];delete state[key(s,p)];saveConfig();save();renderSettings()}
+}
+function render(){document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("active",b.dataset.view===view));if(view==="stock")renderStock();else if(view==="orders")renderOrders();else renderSettings()}
+document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
+render();
+</script>
+</body>
+</html>
